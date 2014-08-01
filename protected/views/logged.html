@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block main %}
+
+	<div class="b-left-menu">
+		<a href="/" class="b-left-menu__item">Manage users</a>
+		<a href="/manage-nodes" class="b-left-menu__item">Manage nodes</a>
+		<a href="/manage-groups" class="b-left-menu__item">Manage groups</a>
+		<a href="/watch-log" class="b-left-menu__item">Watch log</a>
+	</div>
+	<div class="b-content">
+		{% block content %}
+		{% end %}
+	</div>
+	<script>
+	$(window).resize(function(){
+		$('.b-left-menu').css('height', $('.b-content').height() + 'px');
+	}).trigger('resize');
+	</script>
+
+{% end %}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Veevavoo Control Panel</title>
+
+		
+		<meta charset="utf-8"/>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+		
+		<meta name="description" content=""/>
+
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" type="text/javascript"></script>
+		<link rel="stylesheet" type="text/css" href="/static/css/main.css"/>
+		
+		
+	</head>
+
+	<body>
+
+		<div class="main header">
+			<a href="logout" class="logout">logout</a>
+			
+		</div>
+	
+		<div class="main">
+		{% block main %} {% end %}
+		</div>
+	</body>
+
+</html>

@@ -1,0 +1,401 @@
+{% extends "logged.html" %}
+{% block content %}
+	<div class="caption">Manage users</div>
+
+	{% if error %}
+		<style>
+			.error {
+				display : block !important;
+			}
+		</style>
+	{% end %}
+
+	<div class="list userList">
+		{% for user in users %}
+		<div class="list__item" data-description="{{ escape(user['description']) }}" data-id="{{ user['id'] }}" data-key="{{ user['key'] }}" data-login="{{ user['login'] }}" data-ia="{{ user['interface_access'] }}" data-node_user_access_list="{{user['node_user_access_list']}}" data-node_sudo_access_list="{{user['node_sudo_access_list']}}" data-class_user_access_list="{{user['class_user_access_list']}}" data-class_sudo_access_list="{{user['class_sudo_access_list']}}">{{ escape(user['description']) }}</div>
+		{% end %}
+	</div>
+
+	<form action="/" method="post">
+		<input type="submit" class="addUser" value="add"/>
+		<input type="submit" class="delUser" style="display:none" value="delete"/>
+		<input type="submit" class="saveUser" style="display:none" value="save"/>
+		<button class="cancel" style="display:none">cancel</button><br>
+		<input type="hidden" name="action"/>
+		<input type="hidden" name="userId"/>
+		<div class="error">{{ error }}</div>
+		<table>
+			<tr>
+				<td>Description</td>
+				<td>Login</td>
+			</tr>
+			<tr>
+				<td><input name="userDescription" class="block userDescription" type="text" value="{{ userDescription }}"/></td>
+				<td><input name="userLogin"  class="block userLogin" type="text" value="{{ userLogin }}"/></td>
+			</tr>
+			<tr>
+				<td>Password</td>
+				<td>Confirm password</td>
+			</tr>
+			<tr>
+				<td><input name="userPassword"  class="block userPassword" type="password" value="{{ userPassword }}"/></td>
+				<td><input name="userPassword2"  class="block userPassword2" type="password" value="{{ userPassword2 }}"/></td>
+			</tr>
+			<tr>
+				<td>Inteface access</td>
+				<td>Key (RSA/DSA)</td>
+			</tr>
+			<tr>
+				<td><input name="interfaceAccess" class="interfaceAccess" type="checkbox" {% if interfaceAccess %}checked{% end %}/></td>
+				<td><textarea name="userKey" class="userKey">{{ escape(userKey) }}</textarea></td>
+			</tr>
+		</table>
+
+		<div></div>
+
+		<table class="accessListTable">
+			<tr>
+				<td>User access list</td>
+				<td>Sudo access list</td>
+			</tr>
+			<tr>
+				<td>
+					<div class="list userAccess">
+						{% for id in nodeUserAccessList %}
+						<div class="list__item node" data-id="{{id}}">{{ nodesById[int(id)]['name'] }}<input name="nodeUserAccessList" type="hidden" value="{{id}}"/></div>
+						{% end %}
+						{% for id in classUserAccessList %}
+						<div class="list__item class" data-id="{{id}}">{{classesById[int(id)]['name']}}<input name="classUserAccessList" type="hidden" value="{{id}}"/></div>
+						{% end %}
+					</div>
+				</td>
+				<td>
+					<div class="list sudoAccess">
+						{% for id in nodeSudoAccessList %}
+						<div class="list__item node" data-id="{{id}}">{{nodesById[int(id)]['name']}}<input name="nodeSudoAccessList" type="hidden" value="{{id}}"/></div>
+						{% end %}
+						{% for id in classSudoAccessList %}
+						<div class="list__item class" data-id="{{id}}">{{classesById[int(id)]['name']}}<input name="classSudoAccessList" type="hidden" value="{{id}}"/></div>
+						{% end %}
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<button class="addNode user">add</button>
+					<button class="delNode" style="display:none">remove</button>
+				</td>
+				<td>
+					<button class="addNode sudo">add</button>
+					<button class="delNode" style="display:none">remove</button>
+				</td>
+			</tr>
+		</table>
+		{% module xsrf_form_html() %}
+		
+	</form>
+
+	<div class="modal-shadow" style="display:none"></div>
+	<div class="modal" style="display:none">
+		
+		<table class="table_align_center">
+			<tr>
+				<td>Nodes</td>
+				<td>Groups</td>
+			</tr>
+			<tr>
+				<td>
+					<div class="list nodeList">
+						
+
+						
+					</div>
+				</td>
+				<td>
+					<div class="list classList">
+						
+						
+						
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+					<button class="ok_node" style="display:none">ok</button>
+					<button class="cancel_node">cancel</button>
+				</td>
+			</tr>
+		</table>
+	</div>
+
+	<script>
+	$(function() {
+	
+		{% autoescape None %}
+		
+		var nodes = {{ json_encode(nodesById) }};
+		var classes = {{ json_encode(classesById) }};
+
+		var $userDesc = $('.userDescription'),
+		$userLogin = $('.userLogin'),
+		$userPassword = $('.userPassword'),
+		$userPassword2 = $('.userPassword2'),
+		$interfaceAccess = $('.interfaceAccess'),
+		$userKey = $('.userKey'),
+		$addUser = $('.addUser'),
+		$delUser = $('.delUser'),
+		$saveUser = $('.saveUser'),
+		$action = $('form input[name="action"]'),
+		$userId = $('form input[name="userId"]'),
+		$cancel = $('button.cancel'),
+		$modalShadow = $('.modal-shadow'),
+		$modalWnd = $('.modal'),
+		$userAccess = $('.userAccess'),
+		$sudoAccess = $('.sudoAccess'),
+		$nodeList = $('.nodeList'),
+		$classList = $('.classList'),
+		$ok_node = $('.ok_node'),
+		$delNode = $('.delNode'),
+		$addTarget,
+		addTargetWord;
+
+		$('form input[type="submit"]').click(function() {
+			$action.val(this.value);
+		});
+
+
+		var prev = $(),
+		prev2 = $(),
+		prev3 = $();
+
+		$('.addNode').click(function (e) {
+			e.preventDefault();
+			if($(this).hasClass('user')) {
+				$addTarget = $userAccess;
+				addTargetWord = 'User';
+			} else {
+				$addTarget = $sudoAccess;
+				addTargetWord = 'Sudo';
+			}
+			
+			$modalWnd.show();
+			$modalShadow.show();
+			return false;
+		});
+
+		$(document).on('click', '.accessListTable .list__item',function() {
+			prev2.removeClass('list__item_selected');
+			prev2 = $(this);
+			prev2.addClass('list__item_selected');
+
+			$delNode.show();
+		});
+
+		$delNode.click(function (e) {
+			e.preventDefault();
+			$delNode.hide();
+			
+			var	el, cl, $target;
+			if(prev2.hasClass('node')) {
+				$target = $nodeList
+				cl = 'node';
+				el = nodes[prev2.data('id')];
+			} else {
+				$target = $classList
+				cl = 'class';
+				el = classes[prev2.data('id')];
+			}
+			
+			var html = '<div class="list__item ' + cl + '" data-id="' + el['id'] + '">' + el['name'] + '</div>';
+
+			$target.html($target.html() + html);
+			prev2.remove();
+			prev2 = $();
+			return false;
+		});
+
+		$(document).on('click', '.modal .list__item', function() {
+			prev3.removeClass('list__item_selected');
+			prev3 = $(this);
+			prev3.addClass('list__item_selected');
+			$ok_node.show();
+		});
+
+		$modalShadow.click(function() {
+			$modalWnd.hide();
+			$modalShadow.hide();
+			$ok_node.hide();
+		});
+
+		$('.cancel_node').click(function () {
+			$modalWnd.hide();
+			$modalShadow.hide();
+			$ok_node.hide();
+			return false;
+		});
+
+		$ok_node.click(function () {
+			var	el, cl, $target;
+			if(prev3.hasClass('node')) {
+				el = nodes[prev3.data('id')];
+				cl = 'node';
+				
+			} else {
+				el = classes[prev3.data('id')];
+				cl = 'class';
+			}
+			$target = $addTarget;
+			var html = '<div class="list__item ' + cl + '" data-id="' + el['id'] + '">' + el['name'] + '<input name="' + cl + addTargetWord + 'AccessList" type="hidden" value="' + el['id'] + '"/></div>';
+
+			$target.html($target.html() + html);
+			prev3.remove();
+			prev3 = $();
+			$modalWnd.hide();
+			$modalShadow.hide();
+			$ok_node.hide();
+			return false;
+		});
+
+		$('.userList .list__item').click(function() {
+			prev.removeClass('list__item_selected');
+			prev = $(this);
+			prev.addClass('list__item_selected');
+
+			$userDesc.val(prev.data('description'));
+			$userLogin.val(prev.data('login'));				
+			$userPassword.val('leave old');
+			$userPassword2.val('');
+			$interfaceAccess.prop('checked', prev.data('ia').toLowerCase() == 'true' ? 'checked' : false);
+			$userKey.val(prev.data('key'));
+			$userId.val(prev.data('id'));
+			
+			$delUser.css('display', 'inline');
+			$saveUser.css('display', 'inline');
+			$addUser.css('display', 'none');
+			$cancel.css('display', 'inline');
+
+			var nodeClone = {};
+			for(var key in nodes)
+				nodeClone[key] = nodes[key];
+			
+			var classClone = {};
+			for(var key in classes)
+				classClone[key] = classes[key];
+
+			var html = '';
+			var list = prev.data('node_user_access_list') == '' ? [] : prev.data('node_user_access_list').toString().split(',');
+			for(var i=0, len=list.length; i<len; i++) {
+				html += '<div class="list__item node" data-id="' + list[i] + '">' + nodes[list[i]]['name'] + '<input name="nodeUserAccessList" type="hidden" value="' + nodes[list[i]]['id'] + '"/></div>';
+				delete nodeClone[list[i]];
+			}
+
+			list = prev.data('class_user_access_list') == '' ? [] : prev.data('class_user_access_list').toString().split(',');
+			for(var i=0, len=list.length; i<len; i++) {
+				html += '<div class="list__item class" data-id="' + list[i] + '">' + classes[list[i]]['name'] + '<input name="classUserAccessList" type="hidden" value="' + classes[list[i]]['id'] + '"/></div>';
+				delete classClone[list[i]];
+			}
+
+			$userAccess.html(html);
+			
+			html = '';
+			var list = prev.data('node_sudo_access_list') == '' ? [] : prev.data('node_sudo_access_list').toString().split(',');
+			for(var i=0, len=list.length; i<len; i++) {
+				html += '<div class="list__item node" data-id="' + list[i] + '">' + nodes[list[i]]['name'] + '<input name="nodeSudoAccessList" type="hidden" value="' + nodes[list[i]]['id'] + '"/></div>';
+				delete nodeClone[list[i]];
+			}
+
+			list = prev.data('class_sudo_access_list') == '' ? [] : prev.data('class_sudo_access_list').toString().split(',');
+			for(var i=0, len=list.length; i<len; i++) {
+				html += '<div class="list__item class" data-id="' + list[i] + '">' + classes[list[i]]['name'] + '<input name="classSudoAccessList" type="hidden" value="' + classes[list[i]]['id'] + '"/></div>';
+				delete classClone[list[i]];
+			}
+
+			$sudoAccess.html(html);
+			
+			html = '';
+			for(var key in nodeClone)
+				html += '<div class="list__item node" data-id="' + nodeClone[key]['id'] + '">' + nodeClone[key]['name'] + '</div>';
+
+			$nodeList.html(html);
+
+			html = '';
+			for(var key in classClone)
+				html += '<div class="list__item class" data-id="' + classClone[key]['id'] + '">' + classClone[key]['name'] + '</div>';
+
+			$classList.html(html);
+		});
+		$userPassword.blur(function() {
+			if(this.value == '')
+				this.value = 'leave old';
+		}).focus(function() {
+			if(this.value == 'leave old')
+				this.value = '';
+		});
+		var cancelFunc = function(e) {
+			
+			if(prev.length) {
+				prev.removeClass('list__item_selected');
+				prev = $();
+				$userDesc.val('');
+				$userLogin.val('');
+				$userPassword.val('');
+				$userPassword2.val('');
+				$interfaceAccess.attr('checked', false);
+				$userKey.val('');
+
+			}
+			prev2.removeClass('list__item_selected');
+			prev2 = $();
+			$delNode.hide();
+
+			prev3.removeClass('list__item_selected');
+			prev3 = $();
+			$modalWnd.hide();
+			$modalShadow.hide();
+			$ok_node.hide();
+
+			$delUser.css('display', 'none');
+			$saveUser.css('display', 'none');
+			$addUser.css('display', 'inline');
+			$cancel.css('display', 'none');
+
+			$modalWnd.hide();
+			$modalShadow.hide();
+			$userAccess.html('');
+			$sudoAccess.html('');
+
+			var html = '';
+			for(var key in nodes)
+				html += '<div class="list__item node" data-id="' + nodes[key]['id'] + '">' + nodes[key]['name'] + '</div>';
+
+			$nodeList.html(html);
+
+			html = '';
+			for(var key in classes)
+				html += '<div class="list__item class" data-id="' + classes[key]['id'] + '">' + classes[key]['name'] + '</div>';
+
+			$classList.html(html);
+			
+			return false;
+		};
+		
+		$cancel.click(cancelFunc);
+
+		$(document).bind('contextmenu', cancelFunc);
+
+		var html = '';
+		for(var key in nodes)
+			html += '<div class="list__item node" data-id="' + nodes[key]['id'] + '">' + nodes[key]['name'] + '</div>';
+
+		$nodeList.html(html);
+
+		html = '';
+		for(var key in classes)
+			html += '<div class="list__item class" data-id="' + classes[key]['id'] + '">' + classes[key]['name'] + '</div>';
+
+		$classList.html(html);
+		
+	});
+	</script>
+
+{% end %}

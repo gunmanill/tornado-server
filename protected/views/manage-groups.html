@@ -1,0 +1,196 @@
+{% extends "logged.html" %}
+{% block content %}
+	
+	<div class="caption">Manage groups</div>
+
+	{% if error %}
+		<style>
+			.error {
+				display : block !important;
+			}
+		</style>
+	{% end %}
+
+	<form action="/manage-groups" method="post">
+	<table class="node_groups">
+		<tr>
+			<td>
+				<div>Group List</div>
+				<div class="list classes">
+
+					{% for cl in classes %}
+					<div class="list__item" data-name="{{ cl['name'] }}" data-id="{{ cl['id'] }}" data-list="{{ cl['list'] }}">{{ escape(cl['name']) }}</div>
+					{% end %}
+				</div>
+			</td>
+			<td class="nlog" style="display:none">
+				<div>Node list of group</div>
+				<div class="list classNodes">
+		
+				</div>
+			</td>
+			<td>
+				
+					<input type="submit" class="addClass" value="add"/>
+					<input type="submit" class="delClass" style="display:none" value="delete"/>
+					<input type="submit" class="saveClass" style="display:none" value="save"/>
+					<button class="cancel" style="display:none">cancel</button><br>
+					<input type="hidden" name="action"/>
+					<input type="hidden" name="classId"/>
+					<div class="error">{{ error }}</div>
+					{% module xsrf_form_html() %}
+					Group name
+					<input name="className" class="block className" type="text" value="{{ className }}"/>
+					
+					
+
+				
+				<div class="addRemoveNodes" style="display:none">
+					<div>Nodel list</div>
+					<div class="list nodes" style="height:100px;">
+						
+					</div>
+
+					<button class="addNode" style="display:none">add</button>
+					<button class="delNode" style="display:none">remove</button>
+				</div>
+			</td>
+		</tr>
+	</table>
+	</form>
+
+			
+	<script>
+	$(function() {
+		{% autoescape None %}
+		
+		var nodes = {{ json_encode(nodesById) }};
+
+		var $nlog = $('.nlog'),
+		$classes = $('.classes'),
+		$className = $('.className'),		
+		$addClass = $('.addClass'),
+		$delClass = $('.delClass'),
+		$saveClass = $('.saveClass'),
+		$classNodes = $('.classNodes'),
+		$action = $('form input[name="action"]'),
+		$classId = $('form input[name="classId"]'),
+		$cancel = $('button.cancel'),
+		$addRemoveNodes = $('.addRemoveNodes'),
+		$addNode = $('.addNode'),
+		$delNode = $('.delNode'),
+		$nodeList = $('.nodes'),
+		prev = $(),
+		prev2 = $();
+
+		$('form input[type="submit"]').click(function() {
+			$action.val(this.value);
+		});
+
+		$addNode.click(function() {
+			$addNode.hide();
+			var n_id = prev2.data('id');
+			var html = '<div class="list__item" data-id="' + n_id + '">' + nodes[n_id]['name'] + '<input name="classList" type="hidden" value="' + nodes[n_id]['id'] + '"/></div>';
+			$classNodes.html($classNodes.html() + html);
+			prev2.remove();
+			prev2 = $();
+			return false;
+		});
+
+		$delNode.click(function () {
+			$delNode.hide();
+			var n_id = prev2.data('id');
+			var html = '<div class="list__item" data-id="' + n_id + '">' + nodes[n_id]['name'] + '</div>';
+			$nodeList.html($nodeList.html() + html);
+			prev2.remove();
+			prev2 = $();
+			return false;
+		});
+
+		
+
+		$('.list.classes .list__item').click(function() {
+			prev.removeClass('list__item_selected');
+			prev = $(this);
+			prev.addClass('list__item_selected');
+
+			$className.val(prev.data('name'));
+			$classId.val(prev.data('id'));
+			var clone = {};
+			for(var key in nodes)
+				clone[key] = nodes[key];
+			if(prev.data('list') != '') {
+				var list = prev.data('list').toString().split(',');
+				var html = '';
+				for(var i=0, len=list.length; i<len; i++) {
+					html += '<div class="list__item" data-id="' + list[i] + '">' + nodes[list[i]]['name'] + '<input name="classList" type="hidden" value="' + nodes[list[i]]['id'] + '"/></div>';
+					delete clone[list[i]]
+				}
+				$classNodes.html(html);
+
+			} else
+				$classNodes.html('');
+			html = '';
+			for(var key in clone)
+				html += '<div class="list__item" data-id="' + clone[key]['id'] + '">' + clone[key]['name'] + '</div>';
+			$nodeList.html(html);
+			$nlog.show();
+			$cancel.show();
+			$addRemoveNodes.show();
+			prev2.removeClass('list__item_selected');
+			prev2 = $();
+			$delNode.hide();
+			$addNode.hide();
+			$addClass.hide();
+			$delClass.show();
+			$saveClass.show();
+		});
+		var cancelFunc = function(e) {
+			
+			if(prev.length) {
+				prev.removeClass('list__item_selected');
+				prev = $();
+				$className.val('');
+				$classNodes.html('');
+			}
+			if(prev2.length) {
+				prev2.removeClass('list__item_selected');
+				prev2 = $();
+
+			}
+
+			$cancel.hide();
+			$nlog.hide();
+			$addRemoveNodes.hide();
+			$addNode.hide();
+			$delNode.hide();
+
+			$addClass.show();
+			$delClass.hide();
+			$saveClass.hide();
+			
+			return false;
+		};
+		$cancel.click(cancelFunc);
+
+		$(document).bind('contextmenu', cancelFunc);
+
+		
+		$(document).on('click', '.classNodes .list__item', function(e) {
+			prev2.removeClass('list__item_selected');
+			prev2 = $(e.target);
+			prev2.addClass('list__item_selected');
+			$delNode.show();
+			$addNode.hide();
+		});
+		$(document).on('click', '.nodes .list__item', function(e) {
+			prev2.removeClass('list__item_selected');
+			prev2 = $(e.target);
+			prev2.addClass('list__item_selected');
+			$delNode.hide();
+			$addNode.show();
+		});
+
+	});
+	</script>
+{% end %}

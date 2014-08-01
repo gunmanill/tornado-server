@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block main %}
+
+<style>
+	.logout {
+		display : none !important;
+	}
+</style>
+
+<div class="login_form">
+	<form action="/login" method="post">
+		{% if error %}
+			<style>
+				.login_form__error_block {
+					display : block !important;
+				}
+			</style>
+		{% end %}
+		<span class="login_form__error_block">Wrong username or password</span>
+		<span class="login_form__error_block">Remaining {{ try_count }} attempts</span>
+		<span class="login_form__caption">Veevavoo Control Panel</span>
+		<input type="text"/ name="login" value="{{ login }}">
+		<input name="password" type="password"/>
+		 {% module xsrf_form_html() %}
+		<input type="submit" value="login" class="login_form__submit" />
+	</form>
+</div>
+
+{% end %}

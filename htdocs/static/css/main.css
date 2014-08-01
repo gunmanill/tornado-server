@@ -1,0 +1,235 @@
+body {
+	font: 13px arial, sans-serif;
+}
+
+.login_form {
+	width : 200px;
+	margin : 200px auto;
+}
+
+.login_form input {
+	display : block;
+	width : 100%;
+}
+
+.login_form__caption {
+	
+	font-weight: bold;
+}
+
+.login_form__submit {
+	float : right;
+	width : auto !important;
+}
+
+.login_form__error_block {
+	display : none;
+	color : red;
+}
+
+.main {
+	width : 820px;
+	margin : 0 auto;
+	position : relative;
+}
+
+.header {
+	height : 25px;
+}
+
+.logout {
+	float : right;
+}
+
+.add_user_block {
+	width : 200px;
+	margin : 100px auto;
+}
+
+.add_user_block input {
+	display : block;
+	width : 100%;
+}
+
+.add_user_form__submit {
+	float : right;
+	width : auto !important;
+}
+
+.add_user_block .success_block {
+	display : none;
+	color : green;
+}
+
+.b-left-menu {
+	width : 150px;
+	position : absolute;
+	top : 0;
+	left : 0;
+	background-color: #b6d1ee;
+	min-height: 100%;
+	border : 1px solid black;
+}
+
+.b-left-menu__item {
+	display : block;
+	color : black;
+	font-size : 16px;
+	height : 25px;
+	text-decoration: none;
+}
+
+.b-left-menu__item:hover {
+	text-decoration: underline;
+}
+
+.b-content {
+	position : absolute;
+	left : 151px;
+	top : 0;
+	border : 1px solid black;
+	width : 100%;
+	max-width : 662px;
+	min-height : 100%;
+}
+
+.b-content .caption {
+	font-size : 25px;
+	text-align: center;
+}
+
+.b-content .list {
+	width : 200px;
+	height : 200px;
+	overflow-y : auto;
+	border : 1px solid black;
+	margin : 20px;
+	margin-top : 0;
+	float : left;
+	cursor : default;
+}
+
+.list__item:hover {
+	background-color : #b6d1ee;
+}
+
+.list__item_selected {
+	background-color : #b6d1ee;
+}
+
+.block {
+	display : block;
+}
+
+.ip_container {
+  border: 1px inset #999;
+}
+.ip_octet {
+  display : inline;
+  text-align: center;
+  width: 2em;
+}
+.ip_cidr {
+  width: 1.5em;
+}
+.nodeName {
+	width : 116px;
+}
+.error {
+	display:none;
+	color : red;
+}
+
+.node_groups td {
+	vertical-align: top;
+}
+
+.node_groups .list {
+	margin : 5px;
+}
+
+.accessListTable td {
+	text-align: center;
+}
+
+.accessListTable .list {
+	margin-bottom: 0;
+}
+
+.modal-shadow {
+	position : fixed;
+	top : 0;
+	left : 0;
+	right : 0;
+	bottom : 0;
+	background-color: grey;
+	opacity: 0.8;
+}
+
+.modal {
+	position : fixed;
+	width : 486px;
+	left : auto;
+	right : auto;
+	background-color: white;
+	border : 1px solid black;
+	top : 100px;
+}
+
+.table_align_center td {
+	text-align: center;
+}
+
+#calendar {
+	width : 212px;
+	height : 230px;
+	border : 1px solid black;
+	margin : 20px;
+	float : left;
+}
+
+.log_container {
+	display : inline-block;
+}
+
+.log_table {
+	border-collapse : collapse;
+	margin-top : 50px;
+}
+
+.log_table th {
+	position : relative;
+	font-weight: bold;
+	border : 1px solid black;
+	width : 95px;	
+	max-width: 95px;
+}
+
+.log_table td {
+	border : 1px solid black;
+	width : 95px;	
+	max-width: 95px;
+	overflow: visible;
+	text-align: center;
+}
+
+.order_by {
+	cursor : pointer;
+}
+
+.order_by:hover {
+	color : #b6d1ee;
+}
+
+.log_row:hover {
+	background-color : #b6d1ee;
+}
+
+.log_new_old_val td, .log_new_old_val th {
+	border : 1px solid black;
+	min-width: 100px;
+}
+
+.log_new_old_val {
+	border-collapse: collapse;
+}

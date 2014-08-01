@@ -1,0 +1,158 @@
+{% extends "logged.html" %}
+{% block content %}
+	<link rel="stylesheet" type="text/css" media="all" href="/static/css/jsDatePick_ltr.css" />
+	<script type="text/javascript" src="/static/js/jsDatePick.full.1.3.js"></script>
+
+
+	<div class="caption">Watch log</div>
+
+	<div id="calendar"></div>
+
+	<div class="log_container">
+		<table class="log_table">
+			<thead>
+			<tr>
+				<th>
+					<span class="order_by" data-order="time">Time</span>
+				</th>
+				<th>
+					<span class="order_by" data-order="object_type">Object type</span>
+				</th>
+				<th>
+					<span class="order_by" data-order="object">Object</span>
+				</th>
+				<th>
+					<span class="order_by" data-order="action">Action</span>
+				</th>
+			</tr>
+			</thead>
+			<tbody>
+			
+			</tbody>
+		</table>
+	</div>
+
+	<div class="modal-shadow" style="display:none"></div>
+	<div class="modal" style="display:none;width : auto;">
+		<table class="log_new_old_val">
+			<tbody></tbody>
+			<tfoot>
+				<tr>
+					<td colspan="3" align="center"><button class="return">return</button></td>
+				</tr>
+			</tfoot>
+		</table>
+	</div>
+
+
+	<script type="text/javascript">
+	calendarObject = new JsDatePick({
+        useMode : 1,
+        isStripped : true,
+        target : "calendar",
+	  	cellColorScheme : "ocean_blue"
+    });
+
+
+	$tbody = $('.log_table tbody');
+	$modalShadow = $('.modal-shadow');
+	$modalWnd = $('.modal');
+	$log_new_old_val = $('.log_new_old_val tbody');
+
+	order_by = 'time';
+	desc = 'desc';
+
+	$('.order_by').click(function () {
+		desc = desc == 'desc' ? 'asc' : 'desc';
+		order_by = $(this).data('order');
+		getLog();
+	}).bind('selectstart', function(){return false;});
+
+	$modalShadow.click(function () {
+		$modalShadow.hide();
+		$modalWnd.hide();
+	});
+
+	function clone(ob) {
+		var ret = {};
+		for(var key in ob)
+			ret[key] = ob[key];
+		return ret;
+	}
+
+	$(document).on('click', '.log_row', function () {
+		$modalShadow.show();
+		$modalWnd.show();
+		$this = $(this);
+		var html = '<table><tr><th>Key</th><th>Old value</th><th>new value</th></tr>';
+		var oldv = clone($this.data('old'));
+		var newv = clone($this.data('new'));
+		if('empty' in oldv || 'empty' in newv)
+			html += '<tr><td></td><td>' + ('empty' in oldv ? oldv['empty'] : '') + '</td><td>' + ('empty' in newv ? newv['empty'] : '') + '</td></tr>';
+		
+		var iterator = undefined;
+		if(!('empty' in oldv))
+			iterator = oldv;
+		else if(!('empty' in newv))
+			iterator = newv;
+		
+		if(iterator)
+			for(var key in iterator)
+				html += '<tr><td>' + key + '</td><td>' + (key in oldv ? oldv[key] : '') + '</td><td>' + (key in newv ? newv[key] : '') + '</td></tr>';
+			
+		html += '</table>'
+		$log_new_old_val.html(html);
+
+		resFunc();
+	});
+
+	$('.return').click(function () {
+		$modalShadow.hide();
+		$modalWnd.hide();
+	});
+
+	$(document).bind('contextmenu', function () {
+		$modalShadow.hide();
+		$modalWnd.hide();
+		return false;
+	});
+
+	function getCookie(name) {
+	    var r = document.cookie.match("\\b" + name + "=([^;]*)\\b");
+	    return r ? r[1] : undefined;
+	}
+
+	var getLog = function () {
+		var time = new Date();
+		var obj = calendarObject.getSelectedDay() || {year : time.getFullYear(), month : time.getMonth() + 1, day : time.getDate()};
+		
+		$.post('/watch-log', 'order=' + order_by + '&desc=' + desc + '&_xsrf=' + getCookie('_xsrf') + '&' + 'timestamp=' + new Date(obj.year, obj.month - 1, obj.day).getTime(), function(data) {
+			data = $.parseJSON(data);
+			var html = '';
+			for(var i=0, len=data.length; i<len; i++) {
+				
+				html += '<tr class="log_row" data-old=\'' + data[i]['old_val'] + '\' data-new=\'' + data[i]['new_val'] + '\'>\
+							<td>' + new Date(data[i]['time']*1000).toTimeString().split(' ')[0] + '</td>\
+							<td>' + data[i]['object_type'] + '</td>\
+							<td>' + data[i]['object'] + '</td>\
+							<td>' + data[i]['action'] + '</td>\
+						</tr>';
+
+			}
+			$tbody.html(html);
+			$(window).trigger('resize');
+		});
+	}
+
+	getLog();
+
+	var resFunc = function() {
+		$modalWnd.css('left', ($(window).width() - $modalWnd.width())/2 + 'px');
+	}
+	$(window).resize(resFunc);
+    
+    calendarObject.setOnSelectedDelegate(getLog);
+
+	</script>
+	
+{% end %}

@@ -1,0 +1,110 @@
+{% extends "logged.html" %}
+{% block content %}
+	
+	<div class="caption">Manage Nodes</div>
+
+	{% if error %}
+		<style>
+			.error {
+				display : block !important;
+			}
+		</style>
+	{% end %}
+
+	<div class="list">
+		{% for node in nodes %}
+		<div class="list__item" data-name="{{ node['name'] }}" data-ip="{{ node['ip_str'] }}" data-id="{{ node['id'] }}">{{ escape(node['name']) }}</div>
+		{% end %}
+	</div>
+
+	<form action="manage-nodes" method="post">
+		<input type="submit" class="addNode" value="add"/>
+		<input type="submit" class="delNode" style="display:none" value="delete"/>
+		<input type="submit" class="saveNode" style="display:none" value="save"/>
+		<button class="cancel" style="display:none">cancel</button><br>
+		<input type="hidden" name="action"/>
+		<input type="hidden" name="nodeId"/>
+		<div class="error">{{ error }}</div>
+		Name
+		<input name="nodeName" class="block nodeName" type="text" value="{{ nodeName }}"/>
+		<div>Ip</div>
+		<input name="nodeIp" maxlength="3" class="block nodeIp ip ip_octet" type="text" value="{{ nodeIp[0] }}"/>.
+		<input name="nodeIp" maxlength="3" class="block nodeIp ip ip_octet" type="text" value="{{ nodeIp[1] }}"/>.
+		<input name="nodeIp" maxlength="3" class="block nodeIp ip ip_octet" type="text" value="{{ nodeIp[2] }}"/>.
+		<input name="nodeIp" maxlength="3" class="block nodeIp ip ip_octet" type="text" value="{{ nodeIp[3] }}"/>
+		{% module xsrf_form_html() %}
+		
+	</form>
+
+	<script>
+	$(function() {
+	
+
+
+		var $nodeName = $('.nodeName'),
+		$nodeIp = $('.nodeIp'),
+		$ipOcted = $('.ip_octet'),		
+		$addNode = $('.addNode'),
+		$delNode = $('.delNode'),
+		$saveNode = $('.saveNode'),
+		$action = $('form input[name="action"]'),
+		$nodeId = $('form input[name="nodeId"]'),
+		$cancel = $('button.cancel');
+
+		$('form input[type="submit"]').click(function() {
+			$action.val(this.value);
+
+		});
+
+		$nodeIp.blur(function() {
+			this.value = this.value.replace(/[^\d]/g, '');
+			if(this.value > 255)
+				this.value = 255;
+		}).keyup(function(e) {
+			if(!isNaN(parseInt(this.value)) && this.value > 99 || this.value.charAt(this.value.length - 1) == '.')
+				$(this).next('.nodeIp').focus();
+		
+		});
+
+		(function() {
+			var prev = $();
+			$('.list__item').click(function() {
+				prev.removeClass('list__item_selected');
+				prev = $(this);
+				prev.addClass('list__item_selected');
+
+				$nodeName.val(prev.data('name'));
+				$nodeId.val(prev.data('id'));
+				
+				var p = prev.data('ip').toString().split('.');
+				
+				for(var i=0; i<4; i++)
+					$nodeIp[i].value = p[i];
+
+				$delNode.css('display', 'inline');
+				$saveNode.css('display', 'inline');
+				$addNode.css('display', 'none');
+				$cancel.css('display', 'inline');
+
+			});
+			var cancelFunc = function(e) {
+				
+				if(prev.length) {
+					prev.removeClass('list__item_selected');
+					prev = $();
+					$nodeName.val('');
+					$nodeIp.val('');
+				}
+				$delNode.css('display', 'none');
+				$saveNode.css('display', 'none');
+				$addNode.css('display', 'inline');
+				$cancel.css('display', 'none');
+				return false;
+			};
+			$cancel.click(cancelFunc);
+
+			$(document).bind('contextmenu', cancelFunc);
+		})();
+	});
+	</script>
+{% end %}
